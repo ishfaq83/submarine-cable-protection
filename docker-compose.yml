@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: oceanguard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://oceanguard:cableprotect@db:5432/oceanguard_gis
+      - ENVIRONMENT=production
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: oceanguard-postgis
+    environment:
+      POSTGRES_USER: oceanguard
+      POSTGRES_PASSWORD: cableprotect
+      POSTGRES_DB: oceanguard_gis
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgis_data:

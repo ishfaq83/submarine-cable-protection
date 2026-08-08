@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submarine Cable Protection &amp; AIS Maritime Intelligence</title>
+  <meta name="title" content="Submarine Cable Protection &amp; AIS Maritime Intelligence">
+  <meta name="description" content="NATO &amp; Coast Guard Standard Maritime Surveillance &amp; Intelligence Platform — Pakistan Navy, EMSA, US Coast Guard">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Playfair Display + Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =============================================
+       CSS DESIGN TOKENS & VARIABLES
+    ============================================= */
+    :root {
+      --bg-main:         #F5F7FA;
+      --card-bg:         #FFFFFF;
+      --card-hover:      #F8FAFC;
+      --border-color:    #E5E7EB;
+      --header-bg:       #FFFFFF;
+      --sidebar-bg:      #0F172A;
+      --sidebar-item:    #1E293B;
+      --sidebar-active:  #2563EB;
+      --sidebar-text:    #94A3B8;
+      --sidebar-text-active: #FFFFFF;
+      --statusbar-bg:    #0F172A;
+      --statusbar-text:  #64748B;
+      --primary-navy:    #0B2D4D;
+      --ocean-blue:      #2563EB;
+      --success-green:   #16A34A;
+      --warning-amber:   #F59E0B;
+      --critical-red:    #DC2626;
+      --purple-accent:   #7C3AED;
+      --text-primary:    #0F172A;
+      --text-secondary:  #64748B;
+      --text-muted:      #94A3B8;
+      --shadow-card:     0 2px 8px rgba(15, 23, 42, 0.08);
+      --shadow-panel:    0 4px 16px rgba(15, 23, 42, 0.10);
+      --radius-card:     12px;
+      --radius-btn:      10px;
+    }
+
+    [data-theme="dark"] {
+      --bg-main:         #0B132B;
+      --card-bg:         #1C2541;
+      --card-hover:      #2A365C;
+      --border-color:    #2A365C;
+      --header-bg:       #1C2541;
+      --sidebar-bg:      #060E1F;
+      --sidebar-item:    #1C2541;
+      --sidebar-active:  #2563EB;
+      --sidebar-text:    #475569;
+      --sidebar-text-active: #FFFFFF;
+      --statusbar-bg:    #060E1F;
+      --statusbar-text:  #475569;
+      --primary-navy:    #3B82F6;
+      --ocean-blue:      #3A86FF;
+      --text-primary:    #F1F5F9;
+      --text-secondary:  #94A3B8;
+      --text-muted:      #64748B;
+      --shadow-card:     0 2px 8px rgba(0, 0, 0, 0.35);
+      --shadow-panel:    0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    /* =============================================
+       BASE RESET & BODY
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* =============================================
+       SCROLLBARS
+    ============================================= */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* =============================================
+       HEADER
+    ============================================= */
+    #app-header {
+      height: 72px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 0;
+      z-index: 100;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+      transition: background 0.2s;
+    }
+
+    /* Branding Block */
+    .header-brand {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      min-width: 260px;
+      flex-shrink: 0;
+      padding-right: 24px;
+      border-right: 1px solid var(--border-color);
+    }
+    .header-brand h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-navy);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    .header-brand .brand-sub {
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+      margin-top: 2px;
+    }
+    .header-brand .brand-sub span {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    /* Status Ribbon */
+    .header-status-ribbon {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      padding: 0 24px;
+      gap: 0;
+      overflow: hidden;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 16px;
+      position: relative;
+      white-space: nowrap;
+    }
+    .status-item + .status-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 20px;
+      background: var(--border-color);
+    }
+    .status-item .s-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .status-item .s-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    .status-item .s-value {
+      font-size: 10px;
+      font-weight: 700;
+      color: #16A34A;
+      letter-spacing: 0.04em;
+    }
+    .status-item .s-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #16A34A;
+      animation: pulse-dot 2s infinite;
+      flex-shrink: 0;
+    }
+    .status-item .s-dot.amber { background: #F59E0B; animation: none; }
+    .status-item .s-utc { font-size: 11px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .status-item .s-date { font-size: 9px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.05em; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Header Action Buttons */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      padding-left: 16px;
+    }
+    .header-actions .btn-theme {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-btn);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .header-actions .btn-theme:hover { background: var(--bg-main); color: var(--text-primary); }
+    .header-actions .btn-action {
+      height: 40px;
+      padding: 0 16px;
+      border-radius: var(--radius-btn);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      border: none;
+      transition: filter 0.15s ease, transform 0.1s ease;
+      white-space: nowrap;
+    }
+    .header-actions .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .header-actions .btn-action:active { transform: translateY(0); }
+    .btn-inject  { background: #DC2626; }
+    .btn-sat     { background: #7C3AED; }
+    .btn-sim     { background: #2563EB; }
+
+    /* =============================================
+       MAIN WORKSPACE — 3-COLUMN LAYOUT
+    ============================================= */
+    #app-workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* =============================================
+       LEFT SIDEBAR
+    ============================================= */
+    #app-sidebar {
+      width: 230px;
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 50;
+    }
+
+    .sidebar-section-title {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: #334155;
+      text-transform: uppercase;
+      padding: 20px 16px 8px;
+    }
+
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      margin: 1px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      color: var(--sidebar-text);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .sidebar-nav-item:hover {
+      background: #1E293B;
+      color: #CBD5E1;
+    }
+    .sidebar-nav-item.active {
+      background: var(--sidebar-active);
+      color: #fff;
+    }
+    .sidebar-nav-item svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: #1E293B;
+      margin: 8px 16px;
+    }
+
+    /* Map Controls at bottom of sidebar */
+    .sidebar-controls {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-bottom: 12px;
+      overflow-y: auto;
+    }
+
+    .map-ctrl-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      margin: 1px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #64748B;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .map-ctrl-btn:hover { background: #1E293B; color: #94A3B8; }
+    .map-ctrl-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* Buffer corridor toggles in sidebar */
+    .corridor-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      margin: 1px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .corridor-item label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #64748B;
+      font-size: 11px;
+      font-weight: 500;
+      width: 100%;
+    }
+    .corridor-item label:hover { color: #94A3B8; }
+    .corridor-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .corridor-item input[type="checkbox"] {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    /* =============================================
+       CENTER MAP AREA
+    ============================================= */
+    #app-map-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Leaflet popup overrides */
+    .leaflet-popup-content-wrapper {
+      background: #FFFFFF !important;
+      border: 1px solid #E5E7EB !important;
+      color: #0F172A !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+    }
+    .leaflet-popup-tip { background: #FFFFFF !important; }
+    .leaflet-control-zoom {
+      border: none !important;
+      box-shadow: var(--shadow-card) !important;
+    }
+    .leaflet-control-zoom a {
+      background: #FFFFFF !important;
+      color: #0F172A !important;
+      border: 1px solid #E5E7EB !important;
+      font-weight: 600 !important;
+      border-radius: 8px !important;
+      margin-bottom: 2px !important;
+    }
+    .leaflet-control-zoom a:hover { background: #F1F5F9 !important; }
+    .leaflet-bar { border: none !important; }
+
+    /* =============================================
+       RIGHT OPERATIONS PANEL
+    ============================================= */
+    #app-ops-panel {
+      width: 380px;
+      flex-shrink: 0;
+      background: var(--bg-main);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 50;
+    }
+
+    .ops-panel-header {
+      padding: 16px 16px 0;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .ops-panel-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .ops-panel-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #16A34A;
+      text-transform: uppercase;
+    }
+    .live-badge .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #16A34A;
+      animation: pulse-dot 1.5s infinite;
+    }
+
+    /* Tabs */
+    .ops-tabs {
+      display: flex;
+      gap: 0;
+    }
+    .ops-tab-btn {
+      flex: 1;
+      padding: 10px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .ops-tab-btn:hover { color: var(--text-secondary); }
+    .ops-tab-btn.active {
+      color: var(--ocean-blue);
+      border-bottom-color: var(--ocean-blue);
+    }
+    .ops-tab-btn svg { width: 13px; height: 13px; }
+
+    /* Tab content */
+    .ops-tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tab-panel { display: flex; flex-direction: column; gap: 10px; }
+    .tab-panel.hidden { display: none; }
+
+    /* Section label */
+    .panel-section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 4px 0;
+    }
+
+    /* =============================================
+       ALERT CARDS — FULLY REDESIGNED
+    ============================================= */
+    .alert-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .alert-card:hover { box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12); }
+
+    .alert-card-top {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .priority-badge {
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .priority-badge.critical { background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; }
+    .priority-badge.high { background: #FEF3C7; color: #D97706; border: 1px solid #FDE68A; }
+    .priority-badge.medium { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+    .alert-vessel-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      flex: 1;
+      line-height: 1.3;
+    }
+    .alert-timestamp {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .alert-card-body { padding: 10px 14px; }
+
+    .alert-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+      margin-bottom: 10px;
+    }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .meta-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .meta-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+    .meta-value.red    { color: #DC2626; }
+    .meta-value.blue   { color: #2563EB; }
+    .meta-value.amber  { color: #D97706; }
+    .meta-row.full { grid-column: 1 / -1; }
+
+    .alert-risk-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 8px;
+    }
+    .risk-score-block { display: flex; align-items: baseline; gap: 4px; }
+    .risk-score-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .risk-score-max { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+    .risk-zone-pill {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .alert-ai-box {
+      background: var(--bg-main);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+    }
+    .ai-label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .ai-text { font-size: 11px; font-weight: 500; color: var(--text-primary); line-height: 1.5; }
+    .ai-action-label {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #DC2626;
+      margin: 6px 0 2px;
+    }
+    .ai-action-text { font-size: 11px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+
+    .alert-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      padding: 10px 14px 12px;
+    }
+    .ac-btn {
+      height: 32px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: filter 0.15s, transform 0.1s;
+    }
+    .ac-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .ac-btn-notify { background: #16A34A; color: #fff; }
+    .ac-btn-track  { background: #2563EB; color: #fff; }
+    .ac-btn-ignore { background: var(--bg-main); color: var(--text-secondary); border: 1px solid var(--border-color); }
+    .ack-banner {
+      margin: 0 14px 12px;
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #16A34A;
+      text-align: center;
+    }
+
+    /* =============================================
+       VESSEL CARDS
+    ============================================= */
+    .vessel-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-color);
+      padding: 12px 14px;
+      cursor: pointer;
+      box-shadow: var(--shadow-card);
+      transition: box-shadow 0.15s, transform 0.1s;
+    }
+    .vessel-card:hover {
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+      transform: translateY(-1px);
+    }
+
+    /* Search input */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 2px;
+    }
+    .search-wrap input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 9px 12px 9px 36px;
+      font-size: 12px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-wrap input:focus { border-color: var(--ocean-blue); }
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Dark vessel cards */
+    .dark-vessel-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      border: 1px solid #DDD6FE;
+      padding: 12px 14px;
+      box-shadow: var(--shadow-card);
+    }
+    .dark-info-box {
+      background: #FAF5FF;
+      border-radius: 8px;
+      padding: 8px 10px;
+      border: 1px solid #DDD6FE;
+      margin-top: 8px;
+    }
+
+    /* Audit cards */
+    .audit-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      padding: 10px 12px;
+      box-shadow: var(--shadow-card);
+    }
+
+    /* SAR info banner */
+    .sar-info-banner {
+      background: #FAF5FF;
+      border: 1px solid #DDD6FE;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    /* =============================================
+       VESSEL INSPECTION MODAL
+    ============================================= */
+    #vessel-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #vessel-modal.hidden { display: none; }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 640px;
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.20);
+      overflow: hidden;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .modal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .modal-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2563EB;
+    }
+    .modal-close-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .modal-close-btn:hover { background: var(--border-color); }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .modal-metric-card {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .modal-metric-label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+    .modal-metric-val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+    .modal-risk-card {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .risk-bar-wrap { margin-bottom: 10px; }
+    .risk-bar-label-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .risk-bar-name { font-size: 10px; font-weight: 600; color: var(--text-secondary); }
+    .risk-bar-val { font-size: 10px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .risk-bar-track { width: 100%; height: 6px; background: var(--border-color); border-radius: 10px; overflow: hidden; }
+    .risk-bar-fill { height: 100%; border-radius: 10px; transition: width 0.4s ease; }
+
+    .modal-action-box {
+      background: #FFF5F5;
+      border: 1px solid #FECACA;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    /* =============================================
+       BOTTOM STATUS BAR
+    ============================================= */
+    #app-statusbar {
+      height: 38px;
+      background: var(--statusbar-bg);
+      border-top: 1px solid #1E293B;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .sb-items {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 0;
+    }
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 14px;
+      position: relative;
+      white-space: nowrap;
+    }
+    .sb-item + .sb-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 14px;
+      background: #1E293B;
+    }
+    .sb-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .sb-dot.green  { background: #4ADE80; }
+    .sb-dot.blue   { background: #60A5FA; }
+    .sb-dot.purple { background: #A78BFA; }
+    .sb-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; color: #475569; text-transform: uppercase; }
+    .sb-value { font-size: 9.5px; font-weight: 600; color: #94A3B8; }
+    .sb-value.bright { color: #E2E8F0; }
+    .sb-right {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .sb-utc-block {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 14px;
+      border-left: 1px solid #1E293B;
+    }
+    .sb-utc-block svg { width: 12px; height: 12px; color: #60A5FA; }
+    .sb-utc-val { font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; color: #7DD3FC; letter-spacing: 0.03em; }
+
+    /* =============================================
+       ANIMATIONS — subtle only
+    ============================================= */
+    @keyframes pulse-critical {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.35; }
+    }
+    .pulse-critical { animation: pulse-critical 1.8s infinite; }
+
+    @keyframes radar-sweep {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .radar-spin { animation: radar-sweep 4s linear infinite; }
+  </style>
+</head>
+<body>
+
+  <!-- ================================================
+       HEADER
+  ================================================ -->
+  <header id="app-header">
+
+    <!-- Branding -->
+    <div class="header-brand">
+      <h1>Submarine Cable Protection</h1>
+      <div class="brand-sub">
+        <span>AIS Maritime Intelligence</span>
+        <span>Undersea Cable Defense</span>
+      </div>
+    </div>
+
+    <!-- Status Ribbon -->
+    <div class="header-status-ribbon">
+      <div class="status-item">
+        <i data-lucide="cpu" class="s-icon"></i>
+        <span class="s-label">AI Engine</span>
+        <span class="s-dot"></span>
+        <span class="s-value">ACTIVE</span>
+      </div>
+      <div class="status-item">
+        <i data-lucide="radio" class="s-icon"></i>
+        <span class="s-label">AIS Feed</span>
+        <span class="s-dot"></span>
+        <span class="s-value">ONLINE</span>
+      </div>
+      <div class="status-item">
+        <i data-lucide="satellite" class="s-icon"></i>
+        <span class="s-label">Satellite</span>
+        <span class="s-dot"></span>
+        <span class="s-value">ACTIVE</span>
+      </div>
+      <div class="status-item">
+        <i data-lucide="database" class="s-icon"></i>
+        <span class="s-label">Database</span>
+        <span class="s-dot"></span>
+        <span class="s-value">READY</span>
+      </div>
+      <div class="status-item">
+        <i data-lucide="activity" class="s-icon"></i>
+        <span class="s-label">REST API</span>
+        <span class="s-dot"></span>
+        <span class="s-value">HEALTHY</span>
+      </div>
+      <div class="status-item">
+        <i data-lucide="clock" class="s-icon"></i>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <span id="live-utc-header" class="s-utc">08:08:26 UTC</span>
+          <span id="live-utc-date" class="s-date">08 AUG 2026</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="header-actions">
+      <button id="btn-theme-toggle" class="btn-theme" title="Toggle Theme">
+        <i id="theme-toggle-icon" data-lucide="moon" style="width:16px;height:16px;"></i>
+      </button>
+      <button id="btn-inject-threat" class="btn-action btn-inject">
+        <i data-lucide="zap" style="width:14px;height:14px;"></i>
+        Inject Threat
+      </button>
+      <button id="btn-sar-scan" class="btn-action btn-sat">
+        <i data-lucide="satellite" style="width:14px;height:14px;"></i>
+        Satellite Sweep
+      </button>
+      <button id="btn-toggle-sim" class="btn-action btn-sim">
+        <i data-lucide="pause" style="width:14px;height:14px;"></i>
+        <span id="sim-btn-label">Pause Simulation</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================
+       MAIN WORKSPACE
+  ================================================ -->
+  <div id="app-workspace">
+
+    <!-- ============================================
+         LEFT SIDEBAR
+    ============================================ -->
+    <nav id="app-sidebar">
+      <!-- Nav title -->
+      <div class="sidebar-section-title">Operations</div>
+
+      <!-- Nav menu items -->
+      <div class="sidebar-nav-item active" id="nav-dashboard">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </div>
+      <div class="sidebar-nav-item" id="nav-vessels">
+        <i data-lucide="ship"></i>
+        <span>AIS Vessels</span>
+      </div>
+      <div class="sidebar-nav-item" id="nav-cables">
+        <i data-lucide="cable"></i>
+        <span>Submarine Cables</span>
+      </div>
+      <div class="sidebar-nav-item" id="nav-alerts">
+        <i data-lucide="bell"></i>
+        <span>Threat Alerts</span>
+      </div>
+      <div class="sidebar-nav-item" id="nav-dark">
+        <i data-lucide="radar"></i>
+        <span>Dark SAR</span>
+      </div>
+      <div class="sidebar-nav-item" id="nav-audit">
+        <i data-lucide="shield-check"></i>
+        <span>Audit Log</span>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-nav-item" id="nav-settings">
+        <i data-lucide="settings"></i>
+        <span>Settings</span>
+      </div>
+
+      <!-- Spacer -->
+      <div style="flex:1;"></div>
+
+      <!-- Map Controls -->
+      <div class="sidebar-section-title">Map Controls</div>
+
+      <div class="map-ctrl-btn">
+        <i data-lucide="crosshair"></i>
+        <span>Locate</span>
+      </div>
+      <div class="map-ctrl-btn">
+        <i data-lucide="layers"></i>
+        <span>Layers</span>
+      </div>
+      <div class="map-ctrl-btn">
+        <i data-lucide="map"></i>
+        <span>Legend</span>
+      </div>
+      <div class="map-ctrl-btn">
+        <i data-lucide="ruler"></i>
+        <span>Measure</span>
+      </div>
+      <div class="map-ctrl-btn">
+        <i data-lucide="maximize-2"></i>
+        <span>Fullscreen</span>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Buffer Corridors -->
+      <div class="sidebar-section-title">Buffer Corridors</div>
+
+      <div class="corridor-item">
+        <label>
+          <span class="corridor-dot" style="background:#DC2626;"></span>
+          <span style="flex:1;font-size:11px;color:#64748B;font-weight:500;">500m Critical</span>
+          <input type="checkbox" id="chk-zone-500" checked style="accent-color:#DC2626;">
+        </label>
+      </div>
+      <div class="corridor-item">
+        <label>
+          <span class="corridor-dot" style="background:#F59E0B;"></span>
+          <span style="flex:1;font-size:11px;color:#64748B;font-weight:500;">1km Monitoring</span>
+          <input type="checkbox" id="chk-zone-1000" checked style="accent-color:#F59E0B;">
+        </label>
+      </div>
+      <div class="corridor-item">
+        <label>
+          <span class="corridor-dot" style="background:#2563EB;"></span>
+          <span style="flex:1;font-size:11px;color:#64748B;font-weight:500;">5km Warning</span>
+          <input type="checkbox" id="chk-zone-5000" checked style="accent-color:#2563EB;">
+        </label>
+      </div>
+      <div class="corridor-item" style="margin-bottom:12px;">
+        <label>
+          <span class="corridor-dot" style="background:#7C3AED;"></span>
+          <span style="flex:1;font-size:11px;color:#64748B;font-weight:500;">SAR Dark Vessel</span>
+          <input type="checkbox" id="chk-dark-vessels" checked style="accent-color:#7C3AED;">
+        </label>
+      </div>
+    </nav>
+
+    <!-- ============================================
+         CENTER MAP AREA
+    ============================================ -->
+    <div id="app-map-area">
+      <div id="map"></div>
+    </div>
+
+    <!-- ============================================
+         RIGHT OPERATIONS PANEL
+    ============================================ -->
+    <aside id="app-ops-panel">
+
+      <!-- Panel Header & Tabs -->
+      <div class="ops-panel-header">
+        <div class="ops-panel-title-row">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <i data-lucide="crosshair" style="width:16px;height:16px;color:#2563EB;"></i>
+            <span class="ops-panel-title">Operations Center</span>
+          </div>
+          <div class="live-badge">
+            <span class="live-dot"></span>
+            LIVE
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ops-tabs">
+          <button id="tab-btn-alerts" class="ops-tab-btn active">
+            <i data-lucide="bell"></i>
+            Alerts (<span id="count-badge-alerts">2</span>)
+          </button>
+          <button id="tab-btn-vessels" class="ops-tab-btn">
+            <i data-lucide="ship"></i>
+            AIS
+          </button>
+          <button id="tab-btn-dark" class="ops-tab-btn">
+            <i data-lucide="satellite"></i>
+            Dark SAR
+          </button>
+          <button id="tab-btn-audit" class="ops-tab-btn">
+            <i data-lucide="shield-check"></i>
+            Audit
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="ops-tab-content" id="tab-content-container">
+
+        <!-- ALERTS TAB -->
+        <div id="panel-alerts" class="tab-panel">
+          <div class="panel-section-label">Intelligence Briefing — Priority Queue</div>
+          <div id="alerts-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+
+        <!-- VESSELS TAB -->
+        <div id="panel-vessels" class="tab-panel hidden">
+          <div class="search-wrap">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="vessel-search-input" placeholder="Search vessel, MMSI or IMO…">
+          </div>
+          <div id="vessels-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- DARK SAR TAB -->
+        <div id="panel-dark" class="tab-panel hidden">
+          <div class="sar-info-banner">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <i data-lucide="satellite" style="width:14px;height:14px;color:#7C3AED;"></i>
+              <span style="font-size:10px;font-weight:800;letter-spacing:0.08em;color:#7C3AED;text-transform:uppercase;">Sentinel-1 SAR Radar Analysis</span>
+            </div>
+            <p style="font-size:11px;color:#64748B;line-height:1.6;">
+              Cross-references Satellite Synthetic Aperture Radar reflections with AIS transponder signals to flag non-broadcasting dark targets.
+            </p>
+          </div>
+          <div id="dark-vessels-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- AUDIT TAB -->
+        <div id="panel-audit" class="tab-panel hidden">
+          <div class="panel-section-label">Security Audit History</div>
+          <div id="audit-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================================================
+       BOTTOM STATUS BAR
+  ================================================ -->
+  <footer id="app-statusbar">
+    <div class="sb-items">
+      <div class="sb-item">
+        <span class="sb-dot green"></span>
+        <span class="sb-label">AIS Feed</span>
+        <span class="sb-value bright">Connected</span>
+        <span class="sb-value" style="color:#334155;">(152 msg/s)</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-dot purple"></span>
+        <span class="sb-label">Satellite</span>
+        <span class="sb-value bright">Online</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-dot blue"></span>
+        <span class="sb-label">Database</span>
+        <span class="sb-value bright">Operational</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-dot green"></span>
+        <span class="sb-label">REST API</span>
+        <span class="sb-value bright">Healthy</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-label">CPU</span>
+        <span class="sb-value bright">24%</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-label">Memory</span>
+        <span class="sb-value bright">41%</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-label">Last Update</span>
+        <span class="sb-value bright" id="sb-last-update">—</span>
+      </div>
+    </div>
+    <div class="sb-right">
+      <div class="sb-utc-block">
+        <i data-lucide="clock"></i>
+        <span id="live-utc-clock" class="sb-utc-val">2026-08-08 07:47 UTC</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================================================
+       VESSEL INSPECTION MODAL
+  ================================================ -->
+  <div id="vessel-modal" class="hidden">
+    <div class="modal-box">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-icon-wrap">
+            <i data-lucide="ship" style="width:22px;height:22px;"></i>
+          </div>
+          <div>
+            <h3 id="modal-vessel-name" style="font-size:16px;font-weight:800;color:var(--text-primary);">VESSEL NAME</h3>
+            <p id="modal-vessel-mmsi" style="font-size:10px;color:var(--text-muted);font-variant-numeric:tabular-nums;margin-top:2px;">MMSI: 000000000</p>
+          </div>
+        </div>
+        <button id="modal-close-btn" class="modal-close-btn">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+
+        <!-- Metrics Grid -->
+        <div class="modal-metrics-grid">
+          <div class="modal-metric-card">
+            <div class="modal-metric-label">Speed</div>
+            <div id="modal-speed" class="modal-metric-val">0.0 kts</div>
+          </div>
+          <div class="modal-metric-card">
+            <div class="modal-metric-label">Heading</div>
+            <div id="modal-heading" class="modal-metric-val">000°</div>
+          </div>
+          <div class="modal-metric-card">
+            <div class="modal-metric-label">Nearest Cable</div>
+            <div id="modal-cable" style="font-size:11px;font-weight:700;color:#2563EB;margin-top:2px;line-height:1.3;">MAREA Cable</div>
+          </div>
+          <div class="modal-metric-card">
+            <div class="modal-metric-label">Cable Distance</div>
+            <div id="modal-distance" class="modal-metric-val" style="color:#D97706;">0 m</div>
+          </div>
+        </div>
+
+        <!-- AI Risk Score Card -->
+        <div class="modal-risk-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">AI Risk Assessment</div>
+              <div style="display:flex;align-items:baseline;gap:6px;">
+                <span id="modal-risk-score" style="font-size:32px;font-weight:900;font-variant-numeric:tabular-nums;color:#DC2626;">88.5</span>
+                <span style="font-size:12px;color:var(--text-muted);">/ 100</span>
+                <span id="modal-risk-badge" style="font-size:9px;font-weight:800;letter-spacing:0.08em;padding:3px 10px;border-radius:20px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;">CRITICAL</span>
+              </div>
+            </div>
+            <div id="modal-zone-badge" style="font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;padding:6px 12px;border-radius:8px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">
+              ZONE: CRITICAL 500M
+            </div>
+          </div>
+
+          <!-- Risk bars -->
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="risk-bar-wrap">
+              <div class="risk-bar-label-row">
+                <span class="risk-bar-name">Distance Factor</span>
+                <span id="bar-val-dist" class="risk-bar-val">35 / 45 pts</span>
+              </div>
+              <div class="risk-bar-track">
+                <div id="bar-dist" class="risk-bar-fill" style="width:78%;background:#DC2626;"></div>
+              </div>
+            </div>
+            <div class="risk-bar-wrap">
+              <div class="risk-bar-label-row">
+                <span class="risk-bar-name">Speed Anomaly</span>
+                <span id="bar-val-speed" class="risk-bar-val">20 / 25 pts</span>
+              </div>
+              <div class="risk-bar-track">
+                <div id="bar-speed" class="risk-bar-fill" style="width:80%;background:#F59E0B;"></div>
+              </div>
+            </div>
+            <div class="risk-bar-wrap">
+              <div class="risk-bar-label-row">
+                <span class="risk-bar-name">Vessel Type Risk</span>
+                <span id="bar-val-type" class="risk-bar-val">15 / 15 pts</span>
+              </div>
+              <div class="risk-bar-track">
+                <div id="bar-type" class="risk-bar-fill" style="width:100%;background:#F97316;"></div>
+              </div>
+            </div>
+            <div class="risk-bar-wrap">
+              <div class="risk-bar-label-row">
+                <span class="risk-bar-name">Loitering Duration</span>
+                <span id="bar-val-loiter" class="risk-bar-val">15 / 15 pts</span>
+              </div>
+              <div class="risk-bar-track">
+                <div id="bar-loiter" class="risk-bar-fill" style="width:100%;background:#7C3AED;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommended Action -->
+        <div class="modal-action-box">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <i data-lucide="shield-alert" style="width:14px;height:14px;color:#DC2626;"></i>
+            <span style="font-size:9px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#DC2626;">Recommended Protocol Action</span>
+          </div>
+          <p id="modal-recommendation" style="font-size:12px;font-weight:600;color:#991B1B;line-height:1.6;">
+            Issue Urgent VHF Channel 16 warning to halt trawling &amp; dispatch naval patrol craft immediately.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================
+       APPLICATION LOGIC (ALL BUSINESS LOGIC PRESERVED EXACTLY)
+  ================================================ -->
+  <script>
+    let map = null;
+    let tileLayer = null;
+    let cablesLayerGroup = L.layerGroup();
+    let buffersLayerGroup = L.layerGroup();
+    let vesselsLayerGroup = L.layerGroup();
+    let darkVesselsLayerGroup = L.layerGroup();
+
+    let simulationRunning = true;
+    let activeTab = 'alerts';
+
+    let currentTheme = localStorage.getItem('oceanguard_theme') || 'light';
+
+    function applyTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('oceanguard_theme', theme);
+
+      const icon = document.getElementById('theme-toggle-icon');
+      if (icon) {
+        icon.setAttribute('data-lucide', theme === 'light' ? 'moon' : 'sun');
+        lucide.createIcons();
+      }
+
+      if (map) {
+        if (tileLayer) map.removeLayer(tileLayer);
+        const tileUrl = theme === 'light'
+          ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+
+        tileLayer = L.tileLayer(tileUrl, {
+          attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+          subdomains: 'abcd',
+          maxZoom: 19
+        }).addTo(map);
+      }
+    }
+
+    const mockCables = [
+      {
+        id: "marea-01",
+        name: "MAREA Cable System",
+        owners: ["Meta", "Microsoft", "Telxius"],
+        length_km: 6600,
+        coords: [[36.85, -75.97], [37.50, -71.50], [38.20, -65.00], [39.50, -55.00], [41.00, -45.00], [42.10, -35.00], [43.00, -25.00], [43.50, -15.00], [43.80, -8.00], [43.40, -3.00]]
+      },
+      {
+        id: "grace-hopper-02",
+        name: "Grace Hopper Cable",
+        owners: ["Google"],
+        length_km: 6250,
+        coords: [[40.71, -74.00], [41.50, -68.00], [43.00, -58.00], [45.00, -45.00], [47.50, -30.00], [49.50, -15.00], [50.80, -4.50], [43.40, -3.00]]
+      },
+      {
+        id: "seamewe5-03",
+        name: "SEA-ME-WE 5",
+        owners: ["Consortium"],
+        length_km: 20000,
+        coords: [[43.30, 5.37], [38.12, 13.36], [35.00, 24.00], [31.20, 29.90], [29.97, 32.55], [21.48, 39.17], [12.50, 45.00], [18.00, 60.00], [19.07, 72.87], [10.00, 80.00], [5.00, 95.00], [1.29, 103.85]]
+      }
+    ];
+
+    let mockVessels = [
+      { mmsi: "225987123", imo: "9384721", name: "Cantabria Trawler", flag: "Spain", vessel_type: "Fishing Trawler", lat: 43.45, lon: -3.20, speed: 2.1, heading: 124, distance_to_cable_meters: 480.0, nearest_cable: "MAREA Cable System", risk_assessment: { score: 88.5, category: "CRITICAL", color: "#DC2626", zone: "CRITICAL_500M", breakdown: { distance_score: 35, speed_score: 20, vessel_type_score: 15, loitering_score: 18.5 } } },
+      { mmsi: "367123450", imo: "9812341", name: "Atlantic Mariner", flag: "USA", vessel_type: "Container Ship", lat: 38.20, lon: -62.50, speed: 18.5, heading: 75, distance_to_cable_meters: 8400.0, nearest_cable: "MAREA Cable System", risk_assessment: { score: 12.0, category: "LOW", color: "#16A34A", zone: "SAFE_OPEN_SEAS", breakdown: { distance_score: 0, speed_score: 0, vessel_type_score: 5, loitering_score: 0 } } },
+      { mmsi: "247112233", imo: "9223344", name: "Mediterranean Explorer", flag: "Italy", vessel_type: "Dredger", lat: 37.90, lon: 13.80, speed: 1.5, heading: 45, distance_to_cable_meters: 950.0, nearest_cable: "SEA-ME-WE 5", risk_assessment: { score: 68.0, category: "HIGH", color: "#F59E0B", zone: "MONITORING_1KM", breakdown: { distance_score: 20, speed_score: 18, vessel_type_score: 15, loitering_score: 15 } } },
+      { mmsi: "232119988", imo: "9348877", name: "Cable Innova", flag: "UK", vessel_type: "Cable Maintenance Ship", lat: 50.50, lon: -5.20, speed: 1.2, heading: 180, distance_to_cable_meters: 620.0, nearest_cable: "Grace Hopper Cable", risk_assessment: { score: 25.0, category: "LOW", color: "#16A34A", zone: "MONITORING_1KM", breakdown: { distance_score: 18, speed_score: 2, vessel_type_score: 2, loitering_score: 3 } } }
+    ];
+
+    let mockDarkVessels = [
+      { id: "DARK-SAR-8921", satellite_source: "Sentinel-1A SAR", lat: 38.25, lon: -62.48, estimated_length_m: 78, distance_to_nearest_cable_m: 1420.0, nearest_cable: "MAREA Cable System", sar_confidence_score: 0.94, recommended_action: "Dispatch Maritime Patrol Craft & Request Commercial Satellite High-Res Optical Follow-up" },
+      { id: "DARK-SAR-4410", satellite_source: "Sentinel-1B SAR", lat: 24.10, lon: 34.80, estimated_length_m: 115, distance_to_nearest_cable_m: 2100.0, nearest_cable: "SEA-ME-WE 5", sar_confidence_score: 0.88, recommended_action: "Issue Automatic VHF Warning Broadcast & Alert Regional Naval Command" }
+    ];
+
+    let mockAlerts = [
+      { id: "ALT-901", vessel_mmsi: "225987123", vessel_name: "Cantabria Trawler", imo: "9384721", flag: "Spain", nearest_cable: "MAREA", distance_meters: 480.0, speed_knots: 2.1, heading_deg: 124, risk_level: "CRITICAL", risk_score: 88.5, zone: "CRITICAL_500M", ai_assessment: "High probability of illegal seabed anchoring / drag trawling.", recommended_action: "Issue VHF Channel 16 warning. Dispatch nearest patrol asset.", acknowledged: false, timestamp: "2026-08-07 12:20:00" },
+      { id: "ALT-884", vessel_mmsi: "247112233", vessel_name: "Mediterranean Explorer", imo: "9223344", flag: "Italy", nearest_cable: "SEA-ME-WE 5", distance_meters: 950.0, speed_knots: 1.5, heading_deg: 45, risk_level: "HIGH", risk_score: 68.0, zone: "MONITORING_1KM", ai_assessment: "Unscheduled dredging operation inside monitoring corridor.", recommended_action: "Contact port authority to confirm dredging permits.", acknowledged: true, timestamp: "2026-08-07 11:45:00" }
+    ];
+
+    let mockAudit = [
+      { id: "LOG-1001", user: "Commander Sarah Vance", action: "SYSTEM_INITIALIZATION", details: "NATO Standard C2 Defense Intelligence Platform online.", timestamp: "11:00:00" },
+      { id: "LOG-1002", user: "Dr. Alex Rivera", action: "SENTINEL_SAR_SCAN", details: "Completed Sentinel-1 SAR orbital sweep.", timestamp: "11:25:00" }
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initLeafletMap();
+      renderCables();
+      renderBufferCorridors();
+      updateMapVessels();
+      updateMapDarkVessels();
+      renderSidebarContent();
+      setupEventListeners();
+      startLiveClock();
+
+      setInterval(() => {
+        if (simulationRunning) {
+          stepLocalVesselPositions();
+          updateMapVessels();
+          renderSidebarContent();
+        }
+      }, 2000);
+    });
+
+    function startLiveClock() {
+      const updateClock = () => {
+        const now = new Date();
+        const utcStr = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        const clockEl1 = document.getElementById('live-utc-clock');
+        const clockEl2 = document.getElementById('live-utc-header');
+        const dateEl   = document.getElementById('live-utc-date');
+        const lastEl   = document.getElementById('sb-last-update');
+        if (clockEl1) clockEl1.innerText = utcStr;
+        if (clockEl2) clockEl2.innerText = now.toUTCString().split(' ')[4] + ' UTC';
+        if (dateEl) {
+          const d = now.toUTCString().split(' ');
+          dateEl.innerText = `${d[1]} ${d[2]} ${d[3]}`.toUpperCase();
+        }
+        if (lastEl) lastEl.innerText = now.toUTCString().split(' ')[4] + ' UTC';
+      };
+      updateClock();
+      setInterval(updateClock, 1000);
+    }
+
+    function initLeafletMap() {
+      map = L.map('map', {
+        center: [38.00, -30.00],
+        zoom: 3.5,
+        zoomControl: false
+      });
+
+      L.control.zoom({ position: 'topleft' }).addTo(map);
+      applyTheme(currentTheme);
+
+      cablesLayerGroup.addTo(map);
+      buffersLayerGroup.addTo(map);
+      vesselsLayerGroup.addTo(map);
+      darkVesselsLayerGroup.addTo(map);
+    }
+
+    function renderCables() {
+      cablesLayerGroup.clearLayers();
+      mockCables.forEach(cable => {
+        const outerRedLine = L.polyline(cable.coords, {
+          color: '#DC2626',
+          weight: 5,
+          opacity: 0.95
+        });
+
+        const innerWhiteDashedLine = L.polyline(cable.coords, {
+          color: '#FFFFFF',
+          weight: 2,
+          opacity: 1.0,
+          dashArray: '8, 6'
+        });
+
+        const popupContent = `
+          <div style="padding:6px;font-family:Inter,sans-serif;">
+            <div style="font-weight:800;color:#0F172A;font-size:12px;margin-bottom:3px;">${cable.name}</div>
+            <div style="font-size:10px;color:#64748B;">Length: ${cable.length_km} km &nbsp;|&nbsp; Owners: ${cable.owners.join(', ')}</div>
+            <div style="font-size:10px;color:#16A34A;font-weight:700;margin-top:4px;">Status: ACTIVE &amp; PROTECTED</div>
+          </div>
+        `;
+
+        outerRedLine.bindTooltip(popupContent, { sticky: true });
+        innerWhiteDashedLine.bindTooltip(popupContent, { sticky: true });
+
+        cablesLayerGroup.addLayer(outerRedLine);
+        cablesLayerGroup.addLayer(innerWhiteDashedLine);
+      });
+    }
+
+    function renderBufferCorridors() {
+      buffersLayerGroup.clearLayers();
+
+      const show500  = document.getElementById('chk-zone-500').checked;
+      const show1000 = document.getElementById('chk-zone-1000').checked;
+      const show5000 = document.getElementById('chk-zone-5000').checked;
+
+      mockCables.forEach(cable => {
+        if (show5000) {
+          const b5000 = L.polyline(cable.coords, { color: '#2563EB', weight: 28, opacity: 0.15 });
+          buffersLayerGroup.addLayer(b5000);
+        }
+        if (show1000) {
+          const b1000 = L.polyline(cable.coords, { color: '#F59E0B', weight: 16, opacity: 0.22 });
+          buffersLayerGroup.addLayer(b1000);
+        }
+        if (show500) {
+          const b500 = L.polyline(cable.coords, { color: '#DC2626', weight: 8, opacity: 0.35 });
+          buffersLayerGroup.addLayer(b500);
+        }
+      });
+    }
+
+    function updateMapVessels() {
+      vesselsLayerGroup.clearLayers();
+
+      mockVessels.forEach(v => {
+        const risk = v.risk_assessment || { category: 'LOW', color: '#16A34A' };
+        const iconColor = risk.color;
+        const isCritical = risk.category === 'CRITICAL';
+
+        const svgIcon = L.divIcon({
+          className: 'custom-vessel-icon',
+          html: `
+            <div style="position:relative;display:flex;align-items:center;justify-content:center;transform:rotate(${v.heading}deg);">
+              ${isCritical ? `<div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(220,38,38,0.3);" class="pulse-critical"></div>` : ''}
+              <div style="width:30px;height:30px;border-radius:50%;background:#fff;border:2.5px solid ${iconColor};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,0.15);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="${iconColor}" stroke="#fff" stroke-width="1.5">
+                  <path d="M12 2L2 22h20L12 2z"/>
+                </svg>
+              </div>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        const marker = L.marker([v.lat, v.lon], { icon: svgIcon });
+
+        marker.bindPopup(`
+          <div style="padding:8px;font-family:Inter,sans-serif;min-width:200px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E5E7EB;padding-bottom:6px;margin-bottom:6px;">
+              <span style="font-weight:800;color:#0F172A;font-size:12px;">${v.name}</span>
+              <span style="padding:2px 8px;font-size:9px;font-weight:800;border-radius:20px;background:${iconColor}20;color:${iconColor};border:1px solid ${iconColor}40;text-transform:uppercase;">${risk.category}</span>
+            </div>
+            <div style="font-size:11px;color:#64748B;display:flex;flex-direction:column;gap:3px;font-variant-numeric:tabular-nums;">
+              <div>Type: <strong style="color:#0F172A;">${v.vessel_type}</strong></div>
+              <div>MMSI: <strong style="color:#0F172A;">${v.mmsi}</strong></div>
+              <div>Speed: <strong style="color:#2563EB;">${v.speed} kts</strong></div>
+              <div>Cable Dist: <strong style="color:#D97706;">${v.distance_to_cable_meters} m</strong></div>
+              <div>Risk: <strong style="color:#DC2626;">${risk.score} / 100</strong></div>
+            </div>
+            <button onclick="inspectVessel('${v.mmsi}')" style="width:100%;margin-top:8px;padding:7px 0;background:#2563EB;color:#fff;font-weight:700;border-radius:8px;font-size:10px;border:none;cursor:pointer;letter-spacing:0.05em;">
+              View Intelligence Briefing
+            </button>
+          </div>
+        `);
+
+        vesselsLayerGroup.addLayer(marker);
+      });
+    }
+
+    function updateMapDarkVessels() {
+      darkVesselsLayerGroup.clearLayers();
+
+      const showDark = document.getElementById('chk-dark-vessels').checked;
+      if (!showDark) return;
+
+      mockDarkVessels.forEach(dv => {
+        const svgIcon = L.divIcon({
+          className: 'custom-dark-vessel-icon',
+          html: `
+            <div style="position:relative;display:flex;align-items:center;justify-content:center;">
+              <div style="position:absolute;width:38px;height:38px;border-radius:50%;border:2px solid rgba(124,58,237,0.5);" class="radar-spin"></div>
+              <div style="width:28px;height:28px;transform:rotate(45deg);background:#7C3AED;border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(124,58,237,0.4);">
+                <span style="transform:rotate(-45deg);font-size:7px;font-weight:900;color:#fff;letter-spacing:0;">SAR</span>
+              </div>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        const marker = L.marker([dv.lat, dv.lon], { icon: svgIcon });
+
+        marker.bindPopup(`
+          <div style="padding:8px;font-family:Inter,sans-serif;min-width:220px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E5E7EB;padding-bottom:6px;margin-bottom:6px;">
+              <span style="font-weight:800;color:#7C3AED;font-size:12px;">${dv.id}</span>
+              <span style="padding:2px 8px;font-size:9px;font-weight:800;border-radius:20px;background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE;">SAR UNFLAGGED</span>
+            </div>
+            <div style="font-size:11px;color:#64748B;display:flex;flex-direction:column;gap:3px;font-variant-numeric:tabular-nums;">
+              <div>Sensor: <strong style="color:#0F172A;">${dv.satellite_source}</strong></div>
+              <div>Est Size: <strong style="color:#0F172A;">${dv.estimated_length_m} m</strong></div>
+              <div>Cable Dist: <strong style="color:#DC2626;">${dv.distance_to_nearest_cable_m} m</strong></div>
+              <div>SAR Match: <strong style="color:#16A34A;">${(dv.sar_confidence_score * 100).toFixed(0)}%</strong></div>
+            </div>
+          </div>
+        `);
+
+        darkVesselsLayerGroup.addLayer(marker);
+      });
+    }
+
+    function stepLocalVesselPositions() {
+      mockVessels.forEach(v => {
+        const rad = (v.heading * Math.PI) / 180.0;
+        const distKm = (v.speed * 1.852) * (2.0 / 3600.0) * 10.0;
+        v.lat += (distKm * Math.cos(rad)) / 111.0;
+        v.lon += (distKm * Math.sin(rad)) / (111.0 * Math.cos(v.lat * Math.PI / 180.0));
+
+        if (v.mmsi === "225987123") {
+          v.distance_to_cable_meters = Math.max(120, v.distance_to_cable_meters + (Math.random() - 0.5) * 40);
+        }
+      });
+    }
+
+    function renderSidebarContent() {
+      const containerAlerts = document.getElementById('alerts-list');
+      const containerVessels = document.getElementById('vessels-list');
+      const containerDark = document.getElementById('dark-vessels-list');
+      const containerAudit = document.getElementById('audit-list');
+
+      document.getElementById('count-badge-alerts').innerText = mockAlerts.filter(a => !a.acknowledged).length;
+
+      // ── Alert Cards ──────────────────────────────────
+      containerAlerts.innerHTML = mockAlerts.map(a => {
+        const isCritical = a.risk_level === 'CRITICAL';
+        const badgeClass = isCritical ? 'critical' : 'high';
+        const riskColor  = isCritical ? '#DC2626' : '#D97706';
+        const zoneBg     = isCritical ? '#FEF2F2' : '#FFF8EC';
+        const zoneBorder = isCritical ? '#FECACA' : '#FDE68A';
+
+        return `
+          <div class="alert-card">
+            <div class="alert-card-top">
+              <span class="priority-badge ${badgeClass}">${a.risk_level}</span>
+              <span class="alert-vessel-name">${a.vessel_name}</span>
+              <span class="alert-timestamp">${a.timestamp.split(' ')[1] || a.timestamp}</span>
+            </div>
+
+            <div class="alert-card-body">
+              <div class="alert-meta-grid">
+                <div class="meta-row">
+                  <span class="meta-label">IMO</span>
+                  <span class="meta-value">${a.imo || '9384721'}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Flag</span>
+                  <span class="meta-value">${a.flag || 'Spain'}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Speed</span>
+                  <span class="meta-value blue">${a.speed_knots || 2.1} kts</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Heading</span>
+                  <span class="meta-value">${a.heading_deg || 124}°</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Distance</span>
+                  <span class="meta-value red">${a.distance_meters} m</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Cable</span>
+                  <span class="meta-value blue" style="font-size:10px;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${a.nearest_cable}</span>
+                </div>
+              </div>
+
+              <div class="alert-risk-row">
+                <div class="risk-score-block">
+                  <span class="risk-score-val" style="color:${riskColor};">${a.risk_score}</span>
+                  <span class="risk-score-max">/ 100</span>
+                  <span style="font-size:9px;font-weight:700;color:${riskColor};letter-spacing:0.06em;text-transform:uppercase;">Risk Score</span>
+                </div>
+                <div class="risk-zone-pill" style="background:${zoneBg};color:${riskColor};border:1px solid ${zoneBorder};">
+                  ${a.zone.replace(/_/g,' ')}
+                </div>
+              </div>
+
+              <div class="alert-ai-box">
+                <div class="ai-label">AI Threat Assessment</div>
+                <div class="ai-text">${a.ai_assessment || 'High probability of illegal seabed anchoring.'}</div>
+                <div class="ai-action-label">Recommended Action</div>
+                <div class="ai-action-text">${a.recommended_action}</div>
+              </div>
+            </div>
+
+            ${!a.acknowledged ? `
+              <div class="alert-card-actions">
+                <button class="ac-btn ac-btn-notify" onclick="acknowledgeAlert('${a.id}')">
+                  <i data-lucide="phone" style="width:10px;height:10px;"></i>
+                  Notify Coast Guard
+                </button>
+                <button class="ac-btn ac-btn-track" onclick="inspectVessel('${a.vessel_mmsi}')">
+                  <i data-lucide="crosshair" style="width:10px;height:10px;"></i>
+                  Track Vessel
+                </button>
+                <button class="ac-btn ac-btn-ignore" onclick="acknowledgeAlert('${a.id}')">
+                  Ignore
+                </button>
+              </div>
+            ` : `
+              <div class="ack-banner">&#10003; ACKNOWLEDGED BY COMMANDER VANCE</div>
+            `}
+          </div>
+        `;
+      }).join('');
+
+      // ── AIS Vessel Cards ──────────────────────────
+      const query = (document.getElementById('vessel-search-input').value || '').toLowerCase();
+      const filteredVessels = mockVessels.filter(v => v.name.toLowerCase().includes(query) || v.mmsi.includes(query));
+
+      containerVessels.innerHTML = filteredVessels.map(v => `
+        <div class="vessel-card" onclick="inspectVessel('${v.mmsi}')">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-weight:700;color:var(--text-primary);font-size:12px;">${v.name}</span>
+            <span style="padding:2px 8px;font-size:9px;font-weight:800;border-radius:20px;background:${v.risk_assessment.color}20;color:${v.risk_assessment.color};border:1px solid ${v.risk_assessment.color}40;text-transform:uppercase;">
+              ${v.risk_assessment.category}
+            </span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:10px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">
+            <div>Speed: <strong style="color:var(--text-primary);">${v.speed} kts</strong></div>
+            <div>MMSI: <strong style="color:var(--text-primary);">${v.mmsi}</strong></div>
+            <div style="grid-column:1/-1;">Cable Dist: <strong style="color:#D97706;">${v.distance_to_cable_meters} m</strong> &nbsp;(${v.nearest_cable})</div>
+          </div>
+        </div>
+      `).join('');
+
+      // ── Dark Vessel Cards ─────────────────────────
+      containerDark.innerHTML = mockDarkVessels.map(dv => `
+        <div class="dark-vessel-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-weight:800;color:#7C3AED;font-size:12px;">${dv.id}</span>
+            <span style="font-size:10px;font-weight:700;color:#16A34A;">${(dv.sar_confidence_score * 100).toFixed(0)}% Match</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-secondary);font-variant-numeric:tabular-nums;">
+            <div>Sensor: <strong style="color:var(--text-primary);">${dv.satellite_source}</strong></div>
+            <div>Est Size: <strong style="color:var(--text-primary);">${dv.estimated_length_m} m</strong></div>
+            <div>Nearest Cable: <strong style="color:#2563EB;">${dv.nearest_cable}</strong> (${dv.distance_to_nearest_cable_m} m)</div>
+          </div>
+          <div class="dark-info-box">
+            <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;color:#7C3AED;text-transform:uppercase;margin-bottom:3px;">Recommended Action</div>
+            <div style="font-size:11px;color:#4C1D95;font-weight:500;line-height:1.5;">${dv.recommended_action}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // ── Audit Log Cards ───────────────────────────
+      containerAudit.innerHTML = mockAudit.map(l => `
+        <div class="audit-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:10px;font-weight:700;color:#2563EB;">${l.user}</span>
+            <span style="font-size:9px;color:var(--text-muted);font-variant-numeric:tabular-nums;">${l.timestamp}</span>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${l.action}</div>
+          <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;">${l.details}</div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function setupEventListeners() {
+      document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(nextTheme);
+      });
+
+      ['alerts', 'vessels', 'dark', 'audit'].forEach(t => {
+        document.getElementById(`tab-btn-${t}`).addEventListener('click', () => {
+          activeTab = t;
+          ['alerts', 'vessels', 'dark', 'audit'].forEach(other => {
+            const btn   = document.getElementById(`tab-btn-${other}`);
+            const panel = document.getElementById(`panel-${other}`);
+            if (other === t) {
+              btn.classList.add('active');
+              panel.classList.remove('hidden');
+            } else {
+              btn.classList.remove('active');
+              panel.classList.add('hidden');
+            }
+          });
+        });
+      });
+
+      // Sidebar nav — highlight active item (cosmetic only, no routing)
+      ['dashboard', 'vessels', 'cables', 'alerts', 'dark', 'audit', 'settings'].forEach(id => {
+        const el = document.getElementById(`nav-${id}`);
+        if (el) el.addEventListener('click', () => {
+          document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
+          el.classList.add('active');
+        });
+      });
+
+      document.getElementById('chk-zone-500').addEventListener('change', renderBufferCorridors);
+      document.getElementById('chk-zone-1000').addEventListener('change', renderBufferCorridors);
+      document.getElementById('chk-zone-5000').addEventListener('change', renderBufferCorridors);
+      document.getElementById('chk-dark-vessels').addEventListener('change', updateMapDarkVessels);
+
+      document.getElementById('vessel-search-input').addEventListener('input', renderSidebarContent);
+
+      document.getElementById('btn-toggle-sim').addEventListener('click', () => {
+        simulationRunning = !simulationRunning;
+        const label = document.getElementById('sim-btn-label');
+        const icon  = document.querySelector('#btn-toggle-sim [data-lucide]');
+        if (simulationRunning) {
+          label.innerText = 'Pause Simulation';
+          if (icon) icon.setAttribute('data-lucide', 'pause');
+        } else {
+          label.innerText = 'Resume Simulation';
+          if (icon) icon.setAttribute('data-lucide', 'play');
+        }
+        lucide.createIcons();
+      });
+
+      document.getElementById('btn-inject-threat').addEventListener('click', () => {
+        const mmsi = "999" + Math.floor(10000 + Math.random() * 90000);
+        const newVessel = {
+          mmsi: mmsi,
+          name: "INJECTED SUSPICIOUS TRAWLER",
+          vessel_type: "Deep Sea Trawler",
+          lat: 37.51,
+          lon: -71.49,
+          speed: 1.1,
+          heading: 45,
+          distance_to_cable_meters: 320.0,
+          nearest_cable: "MAREA Cable System",
+          risk_assessment: {
+            score: 94.2,
+            category: "CRITICAL",
+            color: "#DC2626",
+            zone: "CRITICAL_500M",
+            breakdown: { distance_score: 42, speed_score: 22, vessel_type_score: 15, loitering_score: 15.2 }
+          }
+        };
+
+        mockVessels.unshift(newVessel);
+        mockAlerts.unshift({
+          id: "ALT-" + Math.floor(Math.random() * 10000),
+          vessel_mmsi: mmsi,
+          vessel_name: "INJECTED SUSPICIOUS TRAWLER",
+          imo: "9912041",
+          flag: "Unknown",
+          nearest_cable: "MAREA",
+          distance_meters: 320.0,
+          speed_knots: 1.1,
+          heading_deg: 45,
+          risk_level: "CRITICAL",
+          risk_score: 94.2,
+          zone: "CRITICAL_500M",
+          ai_assessment: "Target inside 500m critical zone dragging seabed gear.",
+          recommended_action: "DEMO INJECT: Issue VHF warning immediately.",
+          acknowledged: false,
+          timestamp: new Date().toLocaleTimeString()
+        });
+
+        mockAudit.unshift({
+          id: "LOG-" + Math.floor(Math.random() * 10000),
+          user: "Commander Sarah Vance",
+          action: "DEMO_THREAT_INJECTED",
+          details: `Injected high-risk trawler near MAREA cable.`,
+          timestamp: new Date().toLocaleTimeString()
+        });
+
+        updateMapVessels();
+        renderSidebarContent();
+        inspectVessel(mmsi);
+      });
+
+      document.getElementById('btn-sar-scan').addEventListener('click', () => {
+        const newId = "DARK-SAR-" + Math.floor(5000 + Math.random() * 5000);
+        mockDarkVessels.unshift({
+          id: newId,
+          satellite_source: "Sentinel-1A Fresh Orbital Pass",
+          lat: 37.52 + (Math.random() - 0.5) * 0.2,
+          lon: -71.48 + (Math.random() - 0.5) * 0.2,
+          estimated_length_m: Math.floor(65 + Math.random() * 50),
+          distance_to_nearest_cable_m: 850.0,
+          nearest_cable: "MAREA Cable System",
+          sar_confidence_score: 0.96,
+          recommended_action: "Fresh SAR Radar Target identified near MAREA cable corridor. Request naval reconnaissance."
+        });
+
+        mockAudit.unshift({
+          id: "LOG-" + Math.floor(Math.random() * 10000),
+          user: "Dr. Alex Rivera",
+          action: "SENTINEL_SAR_SWEEP",
+          details: `Target ${newId} acquired via Sentinel-1 C-Band SAR.`,
+          timestamp: new Date().toLocaleTimeString()
+        });
+
+        updateMapDarkVessels();
+        renderSidebarContent();
+      });
+
+      document.getElementById('modal-close-btn').addEventListener('click', () => {
+        document.getElementById('vessel-modal').classList.add('hidden');
+      });
+    }
+
+    function acknowledgeAlert(alertId) {
+      const alert = mockAlerts.find(a => a.id === alertId);
+      if (alert) {
+        alert.acknowledged = true;
+        mockAudit.unshift({
+          id: "LOG-" + Math.floor(Math.random() * 10000),
+          user: "Commander Sarah Vance",
+          action: "ALERT_ACKNOWLEDGED",
+          details: `Acknowledged threat alert ${alertId} for ${alert.vessel_name}`,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        renderSidebarContent();
+      }
+    }
+
+    function inspectVessel(mmsi) {
+      const v = mockVessels.find(x => x.mmsi === mmsi);
+      if (!v) return;
+
+      const risk = v.risk_assessment || { score: 10, category: 'LOW', color: '#16A34A', zone: 'SAFE_OPEN_SEAS', breakdown: { distance_score: 0, speed_score: 0, vessel_type_score: 5, loitering_score: 0 } };
+      const bd = risk.breakdown || {};
+
+      document.getElementById('modal-vessel-name').innerText = v.name;
+      document.getElementById('modal-vessel-mmsi').innerText = `MMSI: ${v.mmsi}  |  IMO: ${v.imo || 'IMO998231'}  |  Type: ${v.vessel_type}`;
+      document.getElementById('modal-speed').innerText = `${v.speed} kts`;
+      document.getElementById('modal-heading').innerText = `${v.heading}°`;
+      document.getElementById('modal-cable').innerText = v.nearest_cable;
+      document.getElementById('modal-distance').innerText = `${v.distance_to_cable_meters} m`;
+
+      document.getElementById('modal-risk-score').innerText = risk.score;
+      document.getElementById('modal-risk-score').style.color = risk.color;
+
+      const badge = document.getElementById('modal-risk-badge');
+      badge.innerText = risk.category;
+      badge.style.color = risk.color;
+      badge.style.borderColor = risk.color + '40';
+      badge.style.backgroundColor = risk.color + '20';
+
+      document.getElementById('modal-zone-badge').innerText = `ZONE: ${risk.zone.replace(/_/g, ' ')}`;
+      document.getElementById('modal-zone-badge').style.color = risk.color;
+      document.getElementById('modal-zone-badge').style.borderColor = risk.color + '60';
+      document.getElementById('modal-zone-badge').style.background = risk.color + '10';
+
+      const distPct  = Math.min(100, Math.round(((bd.distance_score  || 0) / 45.0) * 100));
+      const speedPct = Math.min(100, Math.round(((bd.speed_score     || 0) / 25.0) * 100));
+      const typePct  = Math.min(100, Math.round(((bd.vessel_type_score || 0) / 15.0) * 100));
+      const loiterPct= Math.min(100, Math.round(((bd.loitering_score  || 0) / 15.0) * 100));
+
+      document.getElementById('bar-val-dist').innerText   = `${bd.distance_score || 0} / 45 pts`;
+      document.getElementById('bar-dist').style.width     = `${distPct}%`;
+
+      document.getElementById('bar-val-speed').innerText  = `${bd.speed_score || 0} / 25 pts`;
+      document.getElementById('bar-speed').style.width    = `${speedPct}%`;
+
+      document.getElementById('bar-val-type').innerText   = `${bd.vessel_type_score || 0} / 15 pts`;
+      document.getElementById('bar-type').style.width     = `${typePct}%`;
+
+      document.getElementById('bar-val-loiter').innerText = `${bd.loitering_score || 0} / 15 pts`;
+      document.getElementById('bar-loiter').style.width   = `${loiterPct}%`;
+
+      document.getElementById('vessel-modal').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

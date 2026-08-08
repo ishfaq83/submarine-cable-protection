@@ -1,0 +1,174 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "cable-marea-01",
+      "properties": {
+        "id": "marea-01",
+        "name": "MAREA Cable System",
+        "owners": ["Meta", "Microsoft", "Telxius"],
+        "length_km": 6600,
+        "capacity_tbps": 224,
+        "status": "ACTIVE",
+        "landing_points": ["Virginia Beach, USA", "Sopelana (Bilbao), Spain"],
+        "depth_meters": 5200,
+        "risk_level": "NORMAL",
+        "protection_zones": {
+          "critical_meters": 500,
+          "monitoring_meters": 1000,
+          "warning_meters": 5000
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-75.97, 36.85],
+          [-71.50, 37.50],
+          [-65.00, 38.20],
+          [-55.00, 39.50],
+          [-45.00, 41.00],
+          [-35.00, 42.10],
+          [-25.00, 43.00],
+          [-15.00, 43.50],
+          [-8.00, 43.80],
+          [-3.00, 43.40]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cable-grace-hopper-02",
+      "properties": {
+        "id": "grace-hopper-02",
+        "name": "Grace Hopper Submarine Cable",
+        "owners": ["Google"],
+        "length_km": 6250,
+        "capacity_tbps": 350,
+        "status": "ACTIVE",
+        "landing_points": ["New York, USA", "Bude, UK", "Bilbao, Spain"],
+        "depth_meters": 4800,
+        "risk_level": "MONITORED",
+        "protection_zones": {
+          "critical_meters": 500,
+          "monitoring_meters": 1000,
+          "warning_meters": 5000
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-74.00, 40.71],
+          [-68.00, 41.50],
+          [-58.00, 43.00],
+          [-45.00, 45.00],
+          [-30.00, 47.50],
+          [-15.00, 49.50],
+          [-4.50, 50.80],
+          [-3.00, 43.40]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cable-seamewe5-03",
+      "properties": {
+        "id": "seamewe5-03",
+        "name": "SEA-ME-WE 5 (South East Asia-Middle East-Western Europe 5)",
+        "owners": ["Consortium (Singtel, Telecom Egypt, Orange, Sparkle)"],
+        "length_km": 20000,
+        "capacity_tbps": 24,
+        "status": "ACTIVE",
+        "landing_points": ["Marseille, France", "Palermo, Italy", "Alexandria, Egypt", "Jeddah, Saudi Arabia", "Mumbai, India", "Singapore"],
+        "depth_meters": 3500,
+        "risk_level": "ELEVATED",
+        "protection_zones": {
+          "critical_meters": 500,
+          "monitoring_meters": 1000,
+          "warning_meters": 5000
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [5.37, 43.30],
+          [13.36, 38.12],
+          [24.00, 35.00],
+          [29.90, 31.20],
+          [32.55, 29.97],
+          [39.17, 21.48],
+          [45.00, 12.50],
+          [60.00, 18.00],
+          [72.87, 19.07],
+          [80.00, 10.00],
+          [95.00, 5.00],
+          [103.85, 1.29]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cable-tpe-04",
+      "properties": {
+        "id": "tpe-04",
+        "name": "Trans-Pacific Express (TPE)",
+        "owners": ["AT&T", "China Telecom", "NTT", "KT"],
+        "length_km": 17700,
+        "capacity_tbps": 60,
+        "status": "ACTIVE",
+        "landing_points": ["Oregon, USA", "Qingdao, China", "Chikura, Japan", "Geoje, South Korea"],
+        "depth_meters": 6000,
+        "risk_level": "NORMAL",
+        "protection_zones": {
+          "critical_meters": 500,
+          "monitoring_meters": 1000,
+          "warning_meters": 5000
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-123.95, 45.16],
+          [-140.00, 47.00],
+          [-160.00, 48.00],
+          [-180.00, 45.00],
+          [160.00, 40.00],
+          [141.00, 35.00],
+          [120.38, 36.06]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "cable-plcn-05",
+      "properties": {
+        "id": "plcn-05",
+        "name": "Pacific Light Cable Network (PLCN)",
+        "owners": ["Google", "Meta"],
+        "length_km": 12800,
+        "capacity_tbps": 144,
+        "status": "ACTIVE",
+        "landing_points": ["El Segundo, USA", "Toucheng, Taiwan", "Balaler, Philippines"],
+        "depth_meters": 5500,
+        "risk_level": "NORMAL",
+        "protection_zones": {
+          "critical_meters": 500,
+          "monitoring_meters": 1000,
+          "warning_meters": 5000
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-118.42, 33.91],
+          [-135.00, 30.00],
+          [-155.00, 25.00],
+          [-175.00, 22.00],
+          [165.00, 20.00],
+          [140.00, 18.00],
+          [121.82, 24.85]
+        ]
+      }
+    }
+  ]
+}
