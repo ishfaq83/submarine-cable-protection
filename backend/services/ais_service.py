@@ -210,7 +210,7 @@ class AISTrackerService:
             )
             v["risk_assessment"] = risk
 
-    def get_all_vessels((self) -> List[Dict[str, Any]]:
+    def get_all_vessels(self) -> List[Dict[str, Any]]:
         self.step_simulation()
         return list(self.vessels.values())
 
