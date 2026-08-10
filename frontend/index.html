@@ -1164,19 +1164,19 @@
 
         <!-- Tabs -->
         <div class="ops-tabs">
-          <button id="tab-btn-alerts" class="ops-tab-btn active">
+          <button id="tab-btn-alerts" class="ops-tab-btn active" onclick="switchOpsTab('alerts')">
             <i data-lucide="bell"></i>
             Alerts (<span id="count-badge-alerts">2</span>)
           </button>
-          <button id="tab-btn-vessels" class="ops-tab-btn">
+          <button id="tab-btn-vessels" class="ops-tab-btn" onclick="switchOpsTab('vessels')">
             <i data-lucide="ship"></i>
             AIS
           </button>
-          <button id="tab-btn-dark" class="ops-tab-btn">
+          <button id="tab-btn-dark" class="ops-tab-btn" onclick="switchOpsTab('dark')">
             <i data-lucide="satellite"></i>
             Dark SAR
           </button>
-          <button id="tab-btn-audit" class="ops-tab-btn">
+          <button id="tab-btn-audit" class="ops-tab-btn" onclick="switchOpsTab('audit')">
             <i data-lucide="shield-check"></i>
             Audit
           </button>
@@ -1852,7 +1852,26 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
 
       lucide.createIcons();
     }
+function switchOpsTab(tab) {
+  const tabs = ['alerts', 'vessels', 'dark', 'audit'];
 
+  tabs.forEach(name => {
+    const button = document.getElementById(`tab-btn-${name}`);
+    const panel = document.getElementById(`panel-${name}`);
+
+    if (!button || !panel) return;
+
+    if (name === tab) {
+      button.classList.add('active');
+      panel.classList.remove('hidden');
+    } else {
+      button.classList.remove('active');
+      panel.classList.add('hidden');
+    }
+  });
+
+  activeTab = tab;
+}
     function setupEventListeners() {
       document.getElementById('btn-theme-toggle').addEventListener('click', () => {
         const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
