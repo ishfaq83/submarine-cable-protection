@@ -1980,26 +1980,39 @@ function switchOpsTab(tab) {
       });
 
       document.getElementById('btn-sar-scan').addEventListener('click', () => {
-        const newId = "DARK-SAR-" + Math.floor(5000 + Math.random() * 5000);
-        mockDarkVessels.unshift({
-          id: newId,
-          satellite_source: "Sentinel-1A Fresh Orbital Pass",
-          lat: 37.52 + (Math.random() - 0.5) * 0.2,
-          lon: -71.48 + (Math.random() - 0.5) * 0.2,
-          estimated_length_m: Math.floor(65 + Math.random() * 50),
-          distance_to_nearest_cable_m: 850.0,
-          nearest_cable: "MAREA Cable System",
-          sar_confidence_score: 0.96,
-          recommended_action: "Fresh SAR Radar Target identified near MAREA cable corridor. Request naval reconnaissance."
-        });
+  const newId = "DARK-SAR-" + Math.floor(5000 + Math.random() * 5000);
 
-        mockAudit.unshift({
-          id: "LOG-" + Math.floor(Math.random() * 10000),
-          user: "Dr. Alex Rivera",
-          action: "SENTINEL_SAR_SWEEP",
-          details: `Target ${newId} acquired via Sentinel-1 C-Band SAR.`,
-          timestamp: new Date().toLocaleTimeString()
-        });
+  mockDarkVessels.unshift({
+    id: newId,
+    satellite_source: "Sentinel-1A Fresh Orbital Pass",
+    lat: 37.52 + (Math.random() - 0.5) * 0.2,
+    lon: -71.48 + (Math.random() - 0.5) * 0.2,
+    estimated_length_m: Math.floor(65 + Math.random() * 50),
+    distance_to_nearest_cable_m: 850.0,
+    nearest_cable: "MAREA Cable System",
+    sar_confidence_score: 0.96,
+    recommended_action: "Fresh SAR Radar Target identified near MAREA cable corridor. Request naval reconnaissance."
+  });
+
+  mockAudit.unshift({
+    id: "LOG-" + Math.floor(Math.random() * 10000),
+    user: "Dr. Alex Rivera",
+    action: "SENTINEL_SAR_SWEEP",
+    details: `Target ${newId} acquired via Sentinel-1 C-Band SAR.`,
+    timestamp: new Date().toLocaleTimeString()
+  });
+
+  // Automatically enable Dark SAR display
+  const darkCheckbox = document.getElementById('chk-dark-vessels');
+  if (darkCheckbox) darkCheckbox.checked = true;
+
+  // Update map and Operations Center
+  updateMapDarkVessels();
+  renderSidebarContent();
+  switchOpsTab('dark');
+});
+
+        
 
         updateMapDarkVessels();
         renderSidebarContent();
