@@ -1596,53 +1596,62 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
     }
 
     function updateMapVessels() {
-      vesselsLayerGroup.clearLayers();
+     async function updateMapVessels() {
+  vesselsLayerGroup.clearLayers();
 
-      mockVessels.forEach(v => {
-        const risk = v.risk_assessment || { category: 'LOW', color: '#16A34A' };
-        const iconColor = risk.color;
-        const isCritical = risk.category === 'CRITICAL';
+  const liveVessels = await fetchAPI('/api/vessels');
+  const vessels = Array.isArray(liveVessels) ? liveVessels : mockVessels;
 
-        const svgIcon = L.divIcon({
-          className: 'custom-vessel-icon',
-          html: `
-            <div style="position:relative;display:flex;align-items:center;justify-content:center;transform:rotate(${v.heading}deg);">
-              ${isCritical ? `<div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(220,38,38,0.3);" class="pulse-critical"></div>` : ''}
-              <div style="width:30px;height:30px;border-radius:50%;background:#fff;border:2.5px solid ${iconColor};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,0.15);">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="${iconColor}" stroke="#fff" stroke-width="1.5">
-                  <path d="M12 2L2 22h20L12 2z"/>
-                </svg>
-              </div>
-            </div>
-          `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        });
+  vessels.forEach(v => {
+    const risk = v.risk_assessment || {
+      category: 'LOW',
+      color: '#16A34A',
+      score: 0
+    };
 
-        const marker = L.marker([v.lat, v.lon], { icon: svgIcon });
+    const iconColor = risk.color || '#16A34A';
+    const isCritical = risk.category === 'CRITICAL';
 
-        marker.bindPopup(`
-          <div style="padding:8px;font-family:Inter,sans-serif;min-width:200px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E5E7EB;padding-bottom:6px;margin-bottom:6px;">
-              <span style="font-weight:800;color:#0F172A;font-size:12px;">${v.name}</span>
-              <span style="padding:2px 8px;font-size:9px;font-weight:800;border-radius:20px;background:${iconColor}20;color:${iconColor};border:1px solid ${iconColor}40;text-transform:uppercase;">${risk.category}</span>
-            </div>
-            <div style="font-size:11px;color:#64748B;display:flex;flex-direction:column;gap:3px;font-variant-numeric:tabular-nums;">
-              <div>Type: <strong style="color:#0F172A;">${v.vessel_type}</strong></div>
-              <div>MMSI: <strong style="color:#0F172A;">${v.mmsi}</strong></div>
-              <div>Speed: <strong style="color:#2563EB;">${v.speed} kts</strong></div>
-              <div>Cable Dist: <strong style="color:#D97706;">${v.distance_to_cable_meters} m</strong></div>
-              <div>Risk: <strong style="color:#DC2626;">${risk.score} / 100</strong></div>
-            </div>
-            <button onclick="inspectVessel('${v.mmsi}')" style="width:100%;margin-top:8px;padding:7px 0;background:#2563EB;color:#fff;font-weight:700;border-radius:8px;font-size:10px;border:none;cursor:pointer;letter-spacing:0.05em;">
-              View Intelligence Briefing
-            </button>
+    const svgIcon = L.divIcon({
+      className: 'custom-vessel-icon',
+      html: `
+        <div style="position:relative;display:flex;align-items:center;justify-content:center;transform:rotate(${v.heading || 0}deg);">
+          ${isCritical ? `<div style="position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(220,38,38,0.3);" class="pulse-critical"></div>` : ''}
+          <div style="width:30px;height:30px;border-radius:50%;background:#fff;border:2.5px solid ${iconColor};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(15,23,42,0.15);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="${iconColor}" stroke="#fff" stroke-width="1.5">
+              <path d="M12 2L2 22h20L12 2z"/>
+            </svg>
           </div>
-        `);
+        </div>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
 
-        vesselsLayerGroup.addLayer(marker);
-      });
-    }
+    const marker = L.marker([v.lat, v.lon], { icon: svgIcon });
+
+    marker.bindPopup(`
+      <div style="padding:8px;font-family:Inter,sans-serif;min-width:200px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E5E7EB;padding-bottom:6px;margin-bottom:6px;">
+          <span style="font-weight:800;color:#0F172A;font-size:12px;">${v.name}</span>
+          <span style="padding:2px 8px;font-size:9px;font-weight:800;border-radius:20px;background:${iconColor}20;color:${iconColor};border:1px solid ${iconColor}40;text-transform:uppercase;">${risk.category}</span>
+        </div>
+        <div style="font-size:11px;color:#64748B;display:flex;flex-direction:column;gap:3px;font-variant-numeric:tabular-nums;">
+          <div>Type: <strong style="color:#0F172A;">${v.vessel_type || 'Unknown'}</strong></div>
+          <div>MMSI: <strong style="color:#0F172A;">${v.mmsi}</strong></div>
+          <div>Speed: <strong style="color:#2563EB;">${v.speed} kts</strong></div>
+          <div>Cable Dist: <strong style="color:#D97706;">${v.distance_to_cable_meters} m</strong></div>
+          <div>Risk: <strong style="color:#DC2626;">${risk.score || 0} / 100</strong></div>
+        </div>
+        <button onclick="inspectVessel('${v.mmsi}')" style="width:100%;margin-top:8px;padding:7px 0;background:#2563EB;color:#fff;font-weight:700;border-radius:8px;font-size:10px;border:none;cursor:pointer;letter-spacing:0.05em;">
+          View Intelligence Briefing
+        </button>
+      </div>
+    `);
+
+    vesselsLayerGroup.addLayer(marker);
+  });
+}
 
     function updateMapDarkVessels() {
       darkVesselsLayerGroup.clearLayers();
