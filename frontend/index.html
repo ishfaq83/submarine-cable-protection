@@ -1595,8 +1595,7 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
       });
     }
 
-   
-     async function updateMapVessels() {
+  async function updateMapVessels() {
   vesselsLayerGroup.clearLayers();
 
   const liveVessels = await fetchAPI('/api/vessels');
