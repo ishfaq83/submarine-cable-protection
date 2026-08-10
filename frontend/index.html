@@ -1469,6 +1469,16 @@
       { id: "ALT-884", vessel_mmsi: "247112233", vessel_name: "Mediterranean Explorer", imo: "9223344", flag: "Italy", nearest_cable: "SEA-ME-WE 5", distance_meters: 950.0, speed_knots: 1.5, heading_deg: 45, risk_level: "HIGH", risk_score: 68.0, zone: "MONITORING_1KM", ai_assessment: "Unscheduled dredging operation inside monitoring corridor.", recommended_action: "Contact port authority to confirm dredging permits.", acknowledged: true, timestamp: "2026-08-07 11:45:00" }
     ];
 const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
+    async function fetchAPI(endpoint) {
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`);
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("Railway API error:", error);
+    return null;
+  }
+}
     let mockAudit = [
       { id: "LOG-1001", user: "Commander Sarah Vance", action: "SYSTEM_INITIALIZATION", details: "NATO Standard C2 Defense Intelligence Platform online.", timestamp: "11:00:00" },
       { id: "LOG-1002", user: "Dr. Alex Rivera", action: "SENTINEL_SAR_SCAN", details: "Completed Sentinel-1 SAR orbital sweep.", timestamp: "11:25:00" }
