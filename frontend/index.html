@@ -1716,7 +1716,24 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
       document.getElementById('count-badge-alerts').innerText = mockAlerts.filter(a => !a.acknowledged).length;
 
       // ── Alert Cards ──────────────────────────────────
-      containerAlerts.innerHTML = mockAlerts.map(a => {
+      const alertPriority = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+      const orderedAlerts = mockAlerts
+        .map((alert, index) => ({ alert, index }))
+        .sort((a, b) => {
+          const acknowledgedOrder = Number(a.alert.acknowledged) - Number(b.alert.acknowledged);
+          if (acknowledgedOrder !== 0) return acknowledgedOrder;
+
+          const severityOrder = (alertPriority[a.alert.risk_level] ?? 99) - (alertPriority[b.alert.risk_level] ?? 99);
+          if (severityOrder !== 0) return severityOrder;
+
+          const riskOrder = (Number(b.alert.risk_score) || 0) - (Number(a.alert.risk_score) || 0);
+          if (riskOrder !== 0) return riskOrder;
+
+          return a.index - b.index;
+        })
+        .map(item => item.alert);
+
+      containerAlerts.innerHTML = orderedAlerts.map(a => {
         const isCritical = a.risk_level === 'CRITICAL';
         const badgeClass = isCritical ? 'critical' : 'high';
         const riskColor  = isCritical ? '#DC2626' : '#D97706';
