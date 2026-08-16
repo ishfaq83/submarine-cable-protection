@@ -1404,6 +1404,7 @@
     let measurePoints = [];
     let measureLine = null;
     let measureClickHandler = null;
+    let measureMarkers = [];
 
     let currentTheme = localStorage.getItem('oceanguard_theme') || 'light';
 
@@ -1579,26 +1580,84 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
 
     function toggleMapMeasure() {
       if (!map) return;
+
+      // ── If already active: cancel and clean up ──────────────────────────────
       if (measureClickHandler) {
         map.off('click', measureClickHandler);
         measureClickHandler = null;
         measurePoints = [];
-        if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
+        if (measureLine) {
+          map.removeLayer(measureLine);
+          measureLine = null;
+        }
+        if (measureMarkers) {
+          measureMarkers.forEach(m => map.removeLayer(m));
+          measureMarkers = [];
+        }
+        map.getContainer().style.cursor = '';
+        const btn = document.getElementById('map-control-measure');
+        if (btn) btn.style.color = '';
         return;
       }
-      if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
+
+      // ── Activate: clear any leftover from a previous completed measurement ──
+      if (measureLine) {
+        map.removeLayer(measureLine);
+        measureLine = null;
+      }
+      if (measureMarkers) {
+        measureMarkers.forEach(m => map.removeLayer(m));
+        measureMarkers = [];
+      }
       measurePoints = [];
+
+      // Visual cue: crosshair cursor + highlight button
+      map.getContainer().style.cursor = 'crosshair';
+      const btn = document.getElementById('map-control-measure');
+      if (btn) btn.style.color = '#2563EB';
+
+      // ── Click handler: collect two points then draw ─────────────────────────
       measureClickHandler = event => {
         measurePoints.push(event.latlng);
+
+        // Drop a small circle marker at each clicked point
+        const pin = L.circleMarker(event.latlng, {
+          radius: 5,
+          color: '#2563EB',
+          fillColor: '#ffffff',
+          fillOpacity: 1,
+          weight: 2
+        }).addTo(map);
+        measureMarkers.push(pin);
+
         if (measurePoints.length === 2) {
-          const distanceKm = map.distance(measurePoints[0], measurePoints[1]) / 1000;
-          measureLine = L.polyline(measurePoints, { color: '#2563EB', weight: 3, dashArray: '6, 6' }).addTo(map);
-          measureLine.bindTooltip(`${distanceKm.toFixed(2)} km`, { permanent: true, className: 'measure-tooltip' }).openTooltip();
+          // Calculate distance
+          const distanceKm = (map.distance(measurePoints[0], measurePoints[1]) / 1000).toFixed(2);
+
+          // Draw dashed blue line
+          measureLine = L.polyline(measurePoints, {
+            color: '#2563EB',
+            weight: 2.5,
+            dashArray: '8, 6',
+            opacity: 0.9
+          }).addTo(map);
+
+          // Permanent distance tooltip at midpoint
+          measureLine.bindTooltip(`📏 ${distanceKm} km`, {
+            permanent: true,
+            direction: 'center',
+            className: 'measure-tooltip'
+          }).openTooltip();
+
+          // Deactivate measurement mode
           map.off('click', measureClickHandler);
           measureClickHandler = null;
           measurePoints = [];
+          map.getContainer().style.cursor = '';
+          if (btn) btn.style.color = '';
         }
       };
+
       map.on('click', measureClickHandler);
     }
 
