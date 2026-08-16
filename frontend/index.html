@@ -1081,19 +1081,19 @@
       <!-- Map Controls -->
       <div class="sidebar-section-title">Map Controls</div>
 
-      <div class="map-ctrl-btn">
+      <div class="map-ctrl-btn" id="map-control-locate">
         <i data-lucide="crosshair"></i>
         <span>Locate</span>
       </div>
-      <div class="map-ctrl-btn">
+      <div class="map-ctrl-btn" id="map-control-layers">
         <i data-lucide="layers"></i>
         <span>Layers</span>
       </div>
-      <div class="map-ctrl-btn">
+      <div class="map-ctrl-btn" id="map-control-legend">
         <i data-lucide="map"></i>
         <span>Legend</span>
       </div>
-      <div class="map-ctrl-btn">
+      <div class="map-ctrl-btn" id="map-control-measure">
         <i data-lucide="ruler"></i>
         <span>Measure</span>
       </div>
@@ -1400,6 +1400,10 @@
 
     let simulationRunning = true;
     let activeTab = 'alerts';
+    let mapLegendControl = null;
+    let measurePoints = [];
+    let measureLine = null;
+    let measureClickHandler = null;
 
     let currentTheme = localStorage.getItem('oceanguard_theme') || 'light';
 
@@ -1538,6 +1542,64 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
       buffersLayerGroup.addTo(map);
       vesselsLayerGroup.addTo(map);
       darkVesselsLayerGroup.addTo(map);
+    }
+
+    function locateMap() {
+      if (map) map.setView([38.00, -30.00], 3.5);
+    }
+
+    function toggleMapLayers() {
+      if (!map) return;
+      const groups = [cablesLayerGroup, buffersLayerGroup, vesselsLayerGroup, darkVesselsLayerGroup];
+      const showLayers = !map.hasLayer(cablesLayerGroup);
+      groups.forEach(group => {
+        if (showLayers) group.addTo(map);
+        else map.removeLayer(group);
+      });
+    }
+
+    function toggleMapLegend() {
+      if (!map) return;
+      if (!mapLegendControl) {
+        mapLegendControl = L.control({ position: 'bottomright' });
+        mapLegendControl.onAdd = () => {
+          const div = L.DomUtil.create('div', 'map-legend');
+          div.innerHTML = '<strong>Legend</strong><div><span style="color:#DC2626;">━</span> Cable</div><div><span style="color:#2563EB;">━</span> Warning corridor</div><div><span style="color:#7C3AED;">◆</span> Dark SAR</div>';
+          return div;
+        };
+      }
+      if (mapLegendControl._legendAdded) {
+        map.removeControl(mapLegendControl);
+        mapLegendControl._legendAdded = false;
+      } else {
+        mapLegendControl.addTo(map);
+        mapLegendControl._legendAdded = true;
+      }
+    }
+
+    function toggleMapMeasure() {
+      if (!map) return;
+      if (measureClickHandler) {
+        map.off('click', measureClickHandler);
+        measureClickHandler = null;
+        measurePoints = [];
+        if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
+        return;
+      }
+      if (measureLine) { map.removeLayer(measureLine); measureLine = null; }
+      measurePoints = [];
+      measureClickHandler = event => {
+        measurePoints.push(event.latlng);
+        if (measurePoints.length === 2) {
+          const distanceKm = map.distance(measurePoints[0], measurePoints[1]) / 1000;
+          measureLine = L.polyline(measurePoints, { color: '#2563EB', weight: 3, dashArray: '6, 6' }).addTo(map);
+          measureLine.bindTooltip(`${distanceKm.toFixed(2)} km`, { permanent: true, className: 'measure-tooltip' }).openTooltip();
+          map.off('click', measureClickHandler);
+          measureClickHandler = null;
+          measurePoints = [];
+        }
+      };
+      map.on('click', measureClickHandler);
     }
 
     function renderCables() {
@@ -1927,6 +1989,11 @@ function switchOpsTab(tab) {
       document.getElementById('chk-dark-vessels').addEventListener('change', updateMapDarkVessels);
 
       document.getElementById('vessel-search-input').addEventListener('input', renderSidebarContent);
+
+      document.getElementById('map-control-locate').addEventListener('click', locateMap);
+      document.getElementById('map-control-layers').addEventListener('click', toggleMapLayers);
+      document.getElementById('map-control-legend').addEventListener('click', toggleMapLegend);
+      document.getElementById('map-control-measure').addEventListener('click', toggleMapMeasure);
 
       document.getElementById('btn-toggle-sim').addEventListener('click', () => {
         simulationRunning = !simulationRunning;
