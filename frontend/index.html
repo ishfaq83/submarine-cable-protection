@@ -1546,7 +1546,49 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
     }
 
     function locateMap() {
-      if (map) map.setView([38.00, -30.00], 3.5);
+      if (!map) return;
+
+      // Geolocation unavailable — fall back immediately
+      if (!navigator.geolocation) {
+        console.error('Locate: Geolocation is not supported by this browser.');
+        map.setView([38.00, -30.00], 3.5);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        // ── Success ─────────────────────────────────────────────────────────
+        position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          // Centre and zoom to user's location
+          map.setView([lat, lon], 8);
+
+          // Drop a temporary marker (removed automatically after 8 seconds)
+          const locMarker = L.marker([lat, lon])
+            .addTo(map)
+            .bindPopup(
+              `<div style="font-family:Inter,sans-serif;font-size:12px;">
+                <strong>Your Location</strong><br>
+                ${lat.toFixed(5)}, ${lon.toFixed(5)}
+              </div>`,
+              { closeButton: true }
+            )
+            .openPopup();
+
+          setTimeout(() => {
+            if (map.hasLayer(locMarker)) map.removeLayer(locMarker);
+          }, 8000);
+        },
+        // ── Error / denied ───────────────────────────────────────────────────
+        error => {
+          console.error('Locate: Geolocation error —', error.message);
+          alert('Location access denied or unavailable. Showing default view.');
+          map.setView([38.00, -30.00], 3.5);
+        },
+        // ── Options ──────────────────────────────────────────────────────────
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
     }
 
     function toggleMapLayers() {
