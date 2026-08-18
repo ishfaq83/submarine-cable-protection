@@ -1674,7 +1674,7 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
 
         if (measurePoints.length === 2) {
           // Calculate distance
-          const distanceKm = (map.distance(measurePoints[0], measurePoints[1]) / 1000).toFixed(2);
+          const distanceNm = (map.distance(measurePoints[0], measurePoints[1]) / 1000 / 1.852).toFixed(2);
 
           // Draw dashed blue line
           measureLine = L.polyline(measurePoints, {
@@ -1685,7 +1685,7 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
           }).addTo(map);
 
           // Permanent distance tooltip at midpoint
-          measureLine.bindTooltip(`📏 ${distanceKm} km`, {
+          measureLine.bindTooltip(`📏 ${distanceNm} NM`, {
             permanent: true,
             direction: 'center',
             className: 'measure-tooltip'
@@ -1719,10 +1719,12 @@ const API_BASE = "https://submarine-cable-protection-production.up.railway.app";
           dashArray: '8, 6'
         });
 
+        const lengthNm = (cable.length_km / 1.852).toFixed(2);
+
         const popupContent = `
           <div style="padding:6px;font-family:Inter,sans-serif;">
             <div style="font-weight:800;color:#0F172A;font-size:12px;margin-bottom:3px;">${cable.name}</div>
-            <div style="font-size:10px;color:#64748B;">Length: ${cable.length_km} km &nbsp;|&nbsp; Owners: ${cable.owners.join(', ')}</div>
+            <div style="font-size:10px;color:#64748B;">Length: ${lengthNm} NM &nbsp;|&nbsp; Owners: ${cable.owners.join(', ')}</div>
             <div style="font-size:10px;color:#16A34A;font-weight:700;margin-top:4px;">Status: ACTIVE &amp; PROTECTED</div>
           </div>
         `;
