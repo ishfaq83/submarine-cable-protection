@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: oceanguard-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: ENVIRONMENT
+        value: production
