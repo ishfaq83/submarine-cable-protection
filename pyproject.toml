@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "oceanguard-ai"
 version = "3.0.0"
@@ -13,3 +17,7 @@ dependencies = [
 
 [tool.fastapi]
 entrypoint = "backend.main:app"
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
+exclude = ["frontend*"]
