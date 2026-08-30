@@ -1,6 +1,13 @@
 import os
+import sys
 import json
 import time
+
+# Ensure backend directory is on sys.path for internal service and provider imports
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel

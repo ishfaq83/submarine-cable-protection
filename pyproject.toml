@@ -1,0 +1,16 @@
+[project]
+name = "oceanguard-ai"
+version = "3.0.0"
+description = "OceanGuard AI Submarine Cable Protection API"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "httpx",
+    "requests",
+]
+
+[tool.fastapi]
+entrypoint = "backend.main:app"
