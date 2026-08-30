@@ -5,8 +5,7 @@ description = "OceanGuard AI Submarine Cable Protection API"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
+    "fastapi[standard]",
     "pydantic",
     "httpx",
     "requests",
