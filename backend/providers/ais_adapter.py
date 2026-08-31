@@ -71,18 +71,25 @@ class BaseAISProvider(ABC):
 class DigitrafficProvider(BaseAISProvider):
     """
     FREE Real-World Open Public AIS Data Provider: Digitraffic Finland (Fintraffic).
-    URL: https://vessels.digitraffic.fi/api/v1/locations/latest
+    Current API URL: https://meri.digitraffic.fi/api/ais/v1/locations
     Coverage: Baltic Sea, Gulf of Finland, and Northern European Cable Corridors.
     Access Model: Free open public API (No API key required).
+
+    Endpoint can be overridden via the DIGITRAFFIC_API_URL environment variable.
+    NOTE: The legacy hostname vessels.digitraffic.fi is decommissioned and will
+    raise [Errno -2] Name or service not known. This class uses the current endpoint.
     """
 
-    API_URL = "https://vessels.digitraffic.fi/api/v1/locations/latest"
+    # Current live endpoint (as of 2025). Override via DIGITRAFFIC_API_URL env var.
+    DEFAULT_API_URL = "https://meri.digitraffic.fi/api/ais/v1/locations"
 
-    def __init__(self, timeout_seconds: float = 5.0):
+    def __init__(self, timeout_seconds: float = 10.0):
+        self.api_url = os.getenv("DIGITRAFFIC_API_URL", self.DEFAULT_API_URL).strip()
         self.timeout = timeout_seconds
         self.last_fetch_time: float = 0.0
         self.cached_vessels: List[Dict[str, Any]] = []
         self.last_status: str = "INITIALIZED"
+        self.is_available: bool = False  # False until first successful fetch
 
     @property
     def provider_name(self) -> str:
@@ -98,15 +105,16 @@ class DigitrafficProvider(BaseAISProvider):
 
     def fetch_vessels(self) -> List[Dict[str, Any]]:
         now = time.time()
-        # Cache for 10 seconds to respect open API rate guidelines
-        if now - self.last_fetch_time < 10.0 and self.cached_vessels:
+        # Cache for 30 seconds to respect open API rate guidelines
+        if now - self.last_fetch_time < 30.0 and self.cached_vessels:
             return self.cached_vessels
 
         try:
             req = urllib.request.Request(
-                self.API_URL,
+                self.api_url,
                 headers={
-                    "User-Agent": "OceanGuard-AI-Submarine-Cable-Protection/1.0",
+                    "User-Agent": "OceanGuard-AI-Submarine-Cable-Protection/3.0",
+                    "Accept": "application/json",
                     "Accept-Encoding": "gzip, deflate"
                 }
             )
@@ -117,22 +125,23 @@ class DigitrafficProvider(BaseAISProvider):
                     if response.info().get('Content-Encoding') == 'gzip':
                         content = gzip.decompress(content)
                     raw_data = json.loads(content.decode('utf-8'))
-                    
+
                     features = raw_data.get("features", [])
                     normalized = []
                     now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
-                    # Parse GeoJSON FeatureCollection from Digitraffic
+                    # Parse GeoJSON FeatureCollection from Digitraffic meri API
                     for f in features:
                         props = f.get("properties", {})
                         geom = f.get("geometry", {})
-                        coords = geom.get("coordinates", [0.0, 0.0])
+                        coords = geom.get("coordinates", [])
 
                         if not coords or len(coords) < 2:
                             continue
 
                         lon, lat = coords[0], coords[1]
-                        mmsi = str(props.get("mmsi", ""))
+                        # mmsi appears both at the feature level and in properties
+                        mmsi = str(f.get("mmsi", props.get("mmsi", "")))
                         if not mmsi or lat == 0.0 or lon == 0.0:
                             continue
 
@@ -142,7 +151,7 @@ class DigitrafficProvider(BaseAISProvider):
 
                         normalized.append({
                             "mmsi": mmsi,
-                            "imo": f"IMO{props.get('mmsi')}",
+                            "imo": f"IMO{mmsi}",
                             "name": f"VESSEL MMSI {mmsi}",
                             "vessel_type": "Merchant / Commercial",
                             "flag": "Northern Europe",
@@ -159,14 +168,20 @@ class DigitrafficProvider(BaseAISProvider):
 
                     self.cached_vessels = normalized
                     self.last_fetch_time = now
+                    self.is_available = True
                     self.last_status = f"ONLINE ({len(normalized)} real vessels acquired)"
+                    logger.info(f"Digitraffic: {len(normalized)} vessels fetched from {self.api_url}")
                     return normalized
                 else:
+                    self.is_available = False
                     self.last_status = f"HTTP ERROR {response.status}"
+                    logger.warning(f"Digitraffic AIS API returned HTTP {response.status}")
         except Exception as e:
-            self.last_status = f"UNAVAILABLE ({str(e)})"
+            self.is_available = False
+            self.last_status = f"UNAVAILABLE ({type(e).__name__}: {e})"
             logger.warning(f"Digitraffic AIS API unavailable: {e}")
 
+        # Return stale cache if available; otherwise empty list
         return self.cached_vessels
 
     def health_check(self) -> Dict[str, Any]:
@@ -175,9 +190,12 @@ class DigitrafficProvider(BaseAISProvider):
             "real_data": self.is_real_data,
             "coverage": self.coverage_area,
             "status": self.last_status,
+            "available": self.is_available,
+            "api_url": self.api_url,
             "cached_count": len(self.cached_vessels),
             "last_fetch": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(self.last_fetch_time)) if self.last_fetch_time else "NEVER"
         }
+
 
 
 class AISStreamProvider(BaseAISProvider):
