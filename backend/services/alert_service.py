@@ -80,8 +80,9 @@ class AlertService:
             mmsi = v.get("mmsi")
             dist = v.get("distance_to_cable_meters", 99999)
             risk = v.get("risk_assessment", {})
-            score = risk.get("score", 0)
-            category = risk.get("category", "LOW")
+            # Use canonical RiskScoringService field names; fall back to old aliases for safety
+            score = risk.get("risk_score", risk.get("score", 0))
+            category = risk.get("risk_level", risk.get("category", "LOW"))
             zone = risk.get("zone", "SAFE_OPEN_SEAS")
 
             existing = next((a for a in self.alerts if a.get("vessel_mmsi") == mmsi and not a["acknowledged"]), None)
@@ -123,7 +124,7 @@ class AlertService:
                             "distance_meters": dist,
                             "speed_knots": speed,
                             "loitering_minutes": v.get("loitering_minutes", 0.0),
-                            "risk_breakdown": risk.get("breakdown", {})
+                            "risk_breakdown": risk.get("contributing_factors", risk.get("breakdown", {}))
                         },
                         "recommended_action": rec,
                         "acknowledged": False,

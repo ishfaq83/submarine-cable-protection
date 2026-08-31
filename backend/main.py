@@ -192,7 +192,7 @@ def get_analytics():
     alerts = alert_service.evaluate_vessel_alerts(vessels)
     dark_vessels = dark_vessel_engine.get_dark_vessels()
 
-    high_risk_count = sum(1 for v in vessels if v.get("risk_assessment", {}).get("score", 0) >= 61)
+    high_risk_count = sum(1 for v in vessels if v.get("risk_assessment", {}).get("risk_score", v.get("risk_assessment", {}).get("score", 0)) >= 61)
     critical_alerts = sum(1 for a in alerts if a.get("risk_level") == "CRITICAL" and not a.get("acknowledged"))
 
     return {

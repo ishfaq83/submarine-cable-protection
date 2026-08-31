@@ -172,15 +172,21 @@ def calculate_ai_risk_score(
     else:
         zone = "SAFE_OPEN_SEAS"
 
+    contributing_factors = {
+        "distance_score": round(dist_score, 1),
+        "speed_score": round(speed_score, 1),
+        "vessel_type_score": round(type_score, 1),
+        "loitering_score": round(loiter_score, 1)
+    }
     return {
-        "score": total_score,
-        "category": category,
+        # Canonical field names (RiskScoringService schema)
+        "risk_score": total_score,
+        "risk_level": category,
+        "contributing_factors": contributing_factors,
         "color": color,
         "zone": zone,
-        "breakdown": {
-            "distance_score": round(dist_score, 1),
-            "speed_score": round(speed_score, 1),
-            "vessel_type_score": round(type_score, 1),
-            "loitering_score": round(loiter_score, 1)
-        }
+        # Backward-compatible aliases
+        "score": total_score,
+        "category": category,
+        "breakdown": contributing_factors,
     }
